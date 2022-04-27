@@ -1,0 +1,38 @@
+Additional Feature #1 - User Registration:
+
+If a client does not already have a username and password to log in with, they can register with the server to create an account. The register command has a similar format to the other commands done in section 1 of the lab:
+
+/register <client ID> <password> <server-IP> <server-port>
+
+In addition to registration, this command will also log in the user with the new client ID.
+
+After a user enters this command, the client will send a message struct of type REGISTER, source <client ID>, data <password> to server.c. 
+
+To ensure all dynamically registered users are persistent after server restarts, server.c uses C library functions such as fopen() and fprintf() to write each new client ID password pair it receives to a local text file userRecords.txt. This is where all dynamically registered clientID password pairs will be stored. Server.c will read this text file each time it is run using fgets() to get all previous dynamically registered users. This way these dynamically registered users are persistent even after server.c restarts.
+
+Depending on whether the registration was successful or not (registration will fail if the new client ID already exists), server.c will send an acknowledgment message struct with type RE_ACK or RE_NACK back to the client.
+
+
+
+Additional Feature #2 - Private Messaging:
+
+A logged in client can send a private message to any other logged in client. Being part of a group session will not prevent the logged in client from sending/receiving private messages. The client can choose to send private message with the following command:
+
+/to <destination client ID> <text>
+
+Client.c will send a message struct with type PRIVATE, and has data in the format of “<dest clientID> <text>”. 
+
+Server.c has a global hash table cTable that keeps track of all the clients the server is connected to and the sockfd for each connected client. Using this sockfd, if the destination client ID is valid and the destination client is currently logged in, server.c will send to the destination client a message struct with type PRIVATE and has the text in the data field of the struct. The receiving client.c will then print the private message in the following format:
+
+<source client ID>: <text>
+
+If the destination client ID couldn’t be found or the destination client is currently logged out, client.c will send to the sending client a message struct with type PRI_NAK. 
+
+
+
+
+
+
+
+
+
