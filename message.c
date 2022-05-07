@@ -8,6 +8,55 @@
 // Note: kind of arbituary choice here, but must ensure it call store everything
 #define START 135
 
+/*
+** packi16() -- store a 16-bit int into a char buffer (like htons())
+*/ 
+void packi16(uint8_t *buf, uint16_t i)
+{
+    *buf++ = i>>8; *buf++ = i;
+}
+
+/*
+** packi32() -- store a 32-bit int into a char buffer (like htonl())
+*/ 
+void packi32(uint8_t *buf, uint32_t i)
+{
+    *buf++ = i>>24; *buf++ = i>>16;
+    *buf++ = i>>8;  *buf++ = i;
+}
+
+/*
+** packi64() -- store a 64-bit int into a char buffer (like htonl())
+*/ 
+void packi64(uint8_t *buf, uint64_t i)
+{
+    *buf++ = i>>56; *buf++ = i>>48;
+    *buf++ = i>>40; *buf++ = i>>32;
+    *buf++ = i>>24; *buf++ = i>>16;
+    *buf++ = i>>8;  *buf++ = i;
+}
+
+
+/*
+** unpacku16() -- unpack a 16-bit unsigned from a char buffer (like ntohs())
+*/ 
+uint16_t unpacku16(uint8_t *buf)
+{
+    return ((uint16_t)buf[0]<<8) | buf[1];
+}
+
+/*
+** unpacku32() -- unpack a 32-bit unsigned from a char buffer (like ntohl())
+*/ 
+uint32_t unpacku32(uint8_t *buf)
+{
+    return ((uint32_t)buf[0]<<24) |
+           ((uint32_t)buf[1]<<16) |
+           ((uint32_t)buf[2]<<8)  |
+           buf[3];
+}
+
+
 void message_send(int sockfd, Message* msg) {
     int payloadLen = message_findSerializedLength(msg);
     uint8_t* payload = (uint8_t*)malloc(sizeof(uint8_t) * payloadLen); // Note: must free() later
@@ -119,7 +168,8 @@ int message_receive(int sockfd, Message* msg, MsgBuf* mBuf) {
         }
     }
     // Get length of msg from position 0 to 3 from out+2
-    uint32_t expectedLen = ntohl(*((uint32_t*)&mBuf->buf[mBuf->out + 2]));
+    //uint32_t expectedLen = ntohl(*((uint32_t*)&mBuf->buf[mBuf->out + 2]));
+    uint32_t expectedLen = unpacku32(&mBuf->buf[mBuf->out + 2]);
     // while space after msgLength: is less than msgLength-(5bytes+2bytes)
         // call recv and append recvBuf into buf 
     while ((mBuf->in - mBuf->out + mBuf->len) % mBuf->len < expectedLen) {
@@ -153,6 +203,9 @@ int message_receive(int sockfd, Message* msg, MsgBuf* mBuf) {
     return 1; // success
 }
 
+
+
+
 // Convert struct message into payload[]
 // Returns the number of bytes that has been serialized
 // payload = START:SERIALIZED_LENGTH:TYPE:DATASIZE:SOURCE:DATA
@@ -162,16 +215,20 @@ int message_serialize(uint8_t payload[], Message* msg) {
     pos += sizeof(uint8_t);
     payload[pos++] = ':';   
     
-     
-    *((uint32_t*)&payload[pos]) = htonl(message_findSerializedLength(msg));
+    // Note: the commented out code is left to show what not to do.
+    // Must avoid typecasting a less strictly aligned pointer to a more strictly aligned pointer
+    //*((uint32_t*)&payload[pos]) = htonl(message_findSerializedLength(msg));
+    packi32(payload+pos, message_findSerializedLength(msg));
     pos += sizeof(uint32_t);
     payload[pos++] = ':';    
     
-    *((uint32_t*)&payload[pos]) = htonl(msg->type);
+    //*((uint32_t*)&payload[pos]) = htonl(msg->type);
+    packi32(payload+pos, msg->type);
     pos += sizeof(uint32_t);
     payload[pos++] = ':';
     
-    *((uint32_t*)&payload[pos]) = htonl(msg->size);
+    //*((uint32_t*)&payload[pos]) = htonl(msg->size);
+    packi32(payload+pos, msg->size);
     pos += sizeof(uint32_t);
     payload[pos++] = ':';
     
@@ -201,15 +258,21 @@ int message_deserialize(uint8_t payload[], Message* msg){
         printf("%c", payload[i]);
     }*/
 
-    uint32_t expectedLen = ntohl(*((uint32_t*)&payload[2]));
+    // Note: the commented out code is left to show what not to do.
+    // Must avoid typecasting a less strictly aligned pointer to a more strictly aligned pointer
+
+    //uint32_t expectedLen = ntohl(*((uint32_t*)&payload[2]));
+    uint32_t expectedLen = unpacku32(payload+2);
 
 
     int pos = 7; //since pos 0 to 1 stores START and ":" and 2 to 6 the length of payload and ":"
-    msg->type = ntohl(*((uint32_t*)&payload[pos]));
+    //msg->type = ntohl(*((uint32_t*)&payload[pos]));
+    msg->type = unpacku32(payload+pos);
     pos += sizeof(uint32_t);
     pos++; //to skip the ':'
     
-    msg->size = ntohl(*((uint32_t*)&payload[pos]));
+    //msg->size = ntohl(*((uint32_t*)&payload[pos]));
+    msg->size = unpacku32(payload+pos);
     pos += sizeof(uint32_t);
     pos++; //to skip the ':'
    
