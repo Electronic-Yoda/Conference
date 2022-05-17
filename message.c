@@ -9,7 +9,7 @@
 #define START 135
 
 /*
-** packi16() -- store a 16-bit int into a char buffer (like htons())
+** packi16() -- store a 16-bit int into a uint8_t buffer (like htons())
 */ 
 void packi16(uint8_t *buf, uint16_t i)
 {
@@ -17,7 +17,7 @@ void packi16(uint8_t *buf, uint16_t i)
 }
 
 /*
-** packi32() -- store a 32-bit int into a char buffer (like htonl())
+** packi32() -- store a 32-bit int into a uint8_t buffer (like htonl())
 */ 
 void packi32(uint8_t *buf, uint32_t i)
 {
@@ -26,7 +26,7 @@ void packi32(uint8_t *buf, uint32_t i)
 }
 
 /*
-** packi64() -- store a 64-bit int into a char buffer (like htonl())
+** packi64() -- store a 64-bit int into a uint8_t buffer (like htonl())
 */ 
 void packi64(uint8_t *buf, uint64_t i)
 {
@@ -38,7 +38,7 @@ void packi64(uint8_t *buf, uint64_t i)
 
 
 /*
-** unpacku16() -- unpack a 16-bit unsigned from a char buffer (like ntohs())
+** unpacku16() -- unpack a 16-bit unsigned from a uint8_t buffer (like ntohs())
 */ 
 uint16_t unpacku16(uint8_t *buf)
 {
@@ -46,7 +46,7 @@ uint16_t unpacku16(uint8_t *buf)
 }
 
 /*
-** unpacku32() -- unpack a 32-bit unsigned from a char buffer (like ntohl())
+** unpacku32() -- unpack a 32-bit unsigned from a uint8_t buffer (like ntohl())
 */ 
 uint32_t unpacku32(uint8_t *buf)
 {
